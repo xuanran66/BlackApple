@@ -1,0 +1,150 @@
+#转载自https://www.tonymacx86.com/threads/install-dell-dw1820a-broadcom-bcm94350zae.265130/page-6
+
+
+Ok. So for the people who still need this small hack, first try adding 
+brcmfx-driver=1 #重点
+to force Brcm4360 driver to load instead of BrcmNIC (requires AirportBrcmFixUp kext), reboot your system, 
+check if you can see/connect to your network (you may also need 
+brcmfx-country=US or brcmfx-country=#a #重点
+to enable 5Ghz network support, 
+change US or #a with your own local, #a enables 80HT support). 
+HOWEVER, while working with it, 
+check if it doesnt suddenly slowdown and your computer starts lagging like hell and your wifi disconnects, 
+if you get these symptoms, you may need to use this hack (which is the same as the one in this thread, but cleaner, 
+you do not need to edit anything in S/L/E).
+
+
+
+Remove AirportBrcmFixUp from your system (both Clover and in the OS disk, 
+because we have 10.14 system and will not apply a patch for the 10.10 kext rollback), 
+then put F_IO80211Family.kext (extracted ofc) in /Library/Extensions (NOT in /System/Library/Extensions, #重点
+that's the pre-SIP way of doing things, so dont do it), then run in a Terminal window
+#重点
+sudo chown -R root:wheel /Library/Extensions; sudo chmod -R 755 /Library/Extensions; sudo kextcache -i /
+
+This will fix your /Library/Extensions permissions and rebuild the caches (you should do this instead of using KextBeast, 
+Kext Utility, some other software to install kexts, basically do it yourself.) 
+After running the command you will get some errors about BrcmNIC driver not fulfilling some requirements, 
+ignore them. Once done, add to your Clover config these kext patches:#重点
+
+             <dict>
+                <key>Comment</key>
+                <string>10.10-10.11-BCM94352-5GHz-US-FCC-darkvoid</string>
+                <key>Find</key>
+                <data>QYP8/3QsSA==</data>
+                <key>Name</key>
+                <string>com.apple.driver.AirPort.Brcm4360</string>
+                <key>Replace</key>
+                <data>ZscGVVPrKw==</data>
+            </dict>
+            <dict>
+                <key>Comment</key>
+                <string>10.10+-BCM94352-Airport-Extreme-Skvo</string>
+                <key>Disabled</key>
+                <false/>
+                <key>Find</key>
+                <data>axAAAHUN</data>
+                <key>Name</key>
+                <string>com.apple.driver.AirPort.Brcm4360</string>
+                <key>Replace</key>
+                <data>axAAAJCQ</data>
+            </dict>
+            
+(or if you're lazy:
+Name: com.apple.driver.AirPort.Brcm4360
+Find: 4183fcff 742c48
+Replace: 66c70655 53eb2b
+Comment: 10.10-10.11-BCM94352-5GHz-US-FCC-darkvoid
+
+Name: com.apple.driver.AirPort.Brcm4360
+Find: 6b100000 750d
+Replace: 6b100000 9090
+Comment: 10.10+-BCM94352-Airport-Extreme-Skvo)
+
+In case you need a patch to boot the installer or macOS on DW1820A:
+Since booting with the card will slow your computer down, you will have to add these kext patches to your config:#重点
+
+              <dict>
+                <key>Comment</key>
+                <string>Prevent BrcmNIC-MFG kexts from attaching to DW1820A, inspired from CoolStar&apos;s I2C patch</string>
+                <key>Disabled</key>
+                <false/>
+                <key>Name</key>
+                <string>com.apple.driver.AirPort.BrcmNIC-MFG</string>
+                <key>Find</key>
+                <data>SU9LaXQ=</data>
+                <key>Replace</key>
+                <data>SU9LaXM=</data>
+                <key>InfoPlistPatch</key>
+                <true/>
+            </dict>
+            <dict>
+                <key>Comment</key>
+                <string>Prevent BCMWLANFirmware 4355 from attaching to DW1820A, inspired from CoolStar&apos;s I2C patch</string>
+                <key>Name</key>
+                <string>com.apple.driver.BCMWLANFirmware4355.Datastore</string>
+                <key>Disabled</key>
+                <false/>
+                <key>Find</key>
+                <data>SU9LaXQ=</data>
+                <key>Replace</key>
+                <data>SU9LaXM=</data>
+                <key>InfoPlistPatch</key>
+                <true/>
+            </dict>
+            <dict>
+                <key>Comment</key>
+                <string>Prevent BCMWLANFirmware 4355 from attaching to DW1820A, inspired from CoolStar&apos;s I2C patch</string>
+                <key>Name</key>
+                <string>com.apple.driver.BCMWLANFirmware4355.Hashstore</string>
+                <key>Disabled</key>
+                <false/>
+                <key>Find</key>
+                <data>SU9LaXQ=</data>
+                <key>Replace</key>
+                <data>SU9LaXM=</data>
+                <key>InfoPlistPatch</key>
+                <true/>
+            </dict>
+            <dict>
+                <key>Comment</key>
+                <string>Prevent BCMWLANFirmware 4364 from attaching to DW1820A, inspired from CoolStar&apos;s I2C patch</string>
+                <key>Name</key>
+                <string>com.apple.driver.BCMWLANFirmware4364.Datastore</string>
+                <key>Find</key>
+                <data>SU9LaXQ=</data>
+                <key>Disabled</key>
+                <false/>
+                <key>Replace</key>
+                <data>SU9LaXM=</data>
+                <key>InfoPlistPatch</key>
+                <true/>
+            </dict>
+            <dict>
+                <key>Comment</key>
+                <string>Prevent BCMWLANFirmware 4364 from attaching to DW1820A, inspired from CoolStar&apos;s I2C patch</string>
+                <key>Name</key>
+                <string>com.apple.driver.BCMWLANFirmware4364.Hashstore</string>
+                <key>Disabled</key>
+                <false/>
+                <key>Find</key>
+                <data>SU9LaXQ=</data>
+                <key>Replace</key>
+                <data>SU9LaXM=</data>
+                <key>InfoPlistPatch</key>
+                <true/>
+            </dict>
+            <dict>
+                <key>Comment</key>
+                <string>Prevent IO80211 - BrcmNIC from attaching to anything, inspired from CoolStar&apos;s I2C patch</string>
+                <key>Name</key>
+                <string>com.apple.driver.AirPort.BrcmNIC</string>
+                <key>Find</key>
+                <data>SU9LaXQ=</data>
+                <key>Disabled</key>
+                <false/>
+                <key>Replace</key>
+                <data>SU9LaXM=</data>
+                <key>InfoPlistPatch</key>
+                <true/>
+            </dict>
